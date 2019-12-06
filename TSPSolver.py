@@ -129,7 +129,7 @@ class TSPSolver:
 		results['time'] = end_time - start_time
 		results['count'] = nsolutions
 		if all_solns:
-			results['soln'] = solutions
+			results['soln'] = (solutions, bssf)
 		else:
 			results['soln'] = bssf
 		results['max'] = None
@@ -137,7 +137,7 @@ class TSPSolver:
 		results['pruned'] = None
 		return results				
 	
-	
+
 	''' <summary>
 		This is the entry point for the branch-and-bound algorithm that you will implement
 		</summary>
@@ -284,6 +284,10 @@ class TSPSolver:
 	def print_matrix(self, A):
 		print('\n'.join([''.join(['{:5} '.format(item) for item in row]) for row in A]))
 
+
+
+
+
 	''' <summary>
 		This is the entry point for the algorithm you'll write for your group project.
 		</summary>
@@ -294,7 +298,99 @@ class TSPSolver:
 	'''
 		
 	def fancy( self,time_allowance=60.0 ):
-		pass
+		self.population_size = 100
+		self.mating_size = int(self.population_size/2)
+		self.num_mutations = int(self.population_size/4)
+		self.random_sol_time = 2
+		self.greedy_sol_time = 2
+		solution_timeout = 10.0
+		self.last_solution_update = time.time()
+		start = time.time()		
+		self.init_population()
+
+		while time.time()-start_time < time_allowance or time.time()-self.last_solution_update < solution_timeout:
+			# Determine Fitness --> Already done because our population is just the solutions
+			# Select mating pool
+			mating_population = self.select_mates()
+			# Breed
+			breeding_order = np.random.permutation(mating_population)
+			for i in range(0, len(breeding_order), 2):
+				self.breed(breeding_order[i], breeding_order[i+1])
+			# Mutate
+			for _ in range(self.num_mutations):
+				self.mutate(self.population[random.randint(0,len(self.population))])
+			# Prune to population size
+			self.prune()
+		end_time = time.time()
+
+		results = {}
+		results['cost'] = self.bssf.cost
+		results['time'] = end_time - start_time
+		results['count'] = 0
+		results['soln'] = self.bssf
+		results['max'] = None
+		results['total'] = None
+		results['pruned'] = None
+		return results
+
+
+	def select_mates(self):
+		population_costs = np.array([1/p.cost for p in self.population])
+		population_distribution = population_costs/np.sum(population_costs)
+		return np.random.choice(self.population, self.mating_size, p=population_distribution)
+
+	def init_population(self):
+		sols, bssf = self.greedy(time_allowance=self.greedy_sol_time, all_solns=True)['soln']
+		self.bssf = bssf
+		while len(sols) < self.population_size:
+			sol = self.defaultRandomTour(time_allowance=self.random_sol_time)['soln']
+			self.add_sol(sol)
+		self.population = sols
+
+	def mutate(self, sol):
+		idx = random.randint(0, len(sol.route)-1)
+		route = sol.route.copy()
+		route[idx], route[idx+1] = route[idx+1], route[idx]
+		new_sol = TSPSolution(route)
+		self.add_sol(new_sol)
 		
 
+	def add_sol(self, new_sol, keep_inf_prob=0):
+		if new_sol.cost < np.inf or random.random() < keep_inf_prob:
+			self.population.append(new_sol)
+		if new_sol.cost < self.bssf.cost:
+				self.bssf = sol
+				self.last_solution_update = time.time()
+		
+	def breed(self, sol1, sol2):
+		range1 = random.randint(0, len(sol1.route))
+		range2 = random.randint(0, len(sol1.route))
 
+		start_idx = min(range1, range2)
+		end_idx = min(range1, range2)
+		self.add_sol(self.breed_single(sol1, sol2, start_idx, end_idx))
+		self.add_sol(self.breed_single(sol2, sol1, start_idx, end_idx))
+	
+
+	def breed_single(self, sol1, sol2, start_idx, end_idx):
+		cities = set(map(lambda x: x._index, sol1.route[start_idx:end_idx+1]))
+		new_route = sol1.route.copy()
+		j = 0
+		for i in range(len(sol1.route)):
+			if i >= start_idx or i <= end_idx:
+				continue
+			while sol2.route[j]._index in cities:
+				j += 1
+			new_route[i] = sol2.route[j]
+			j += 1
+		return TSPSolution(new_route)
+
+	def prune(self):
+		num_to_prune = len(self.population) - self.population_size
+		costs = [p.cost for p in self.population]
+		max_cost = max(filter(lambda x: x < np.inf, self.costs))
+		costs = [if c <= np.inf c else max_cost for c in costs]
+		population_costs = np.array(costs)
+		population_distribution = population_costs/np.sum(population_costs)
+		delete_routes = np.random.choice(self.population, self.num_to_prune, p=population_distribution)
+		self.population = list(filter(lambda city: city not in delete_routes, self.population))
