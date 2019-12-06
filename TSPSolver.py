@@ -83,8 +83,9 @@ class TSPSolver:
 		algorithm</returns> 
 	'''
 
-	def greedy( self,time_allowance=60.0 ):
+	def greedy( self,time_allowance=60.0, all_solns = False ):
 		results = {}
+		solutions = []
 		nsolutions = 0
 		cities = self._scenario.getCities()
 		ncities = len(cities)
@@ -117,6 +118,9 @@ class TSPSolver:
 					#print(f"Cost of solution starting at {start_city._name} - {bssf_candidate.cost}")
 					if bssf is None or bssf_candidate.cost < bssf.cost:
 						bssf = bssf_candidate
+					if all_solns:
+						solutions.append(bssf_candidate)
+
 		end_time = time.time()
 		if bssf is not None:
 			results['cost'] = bssf.cost
@@ -124,7 +128,10 @@ class TSPSolver:
 			results['cost'] = math.inf
 		results['time'] = end_time - start_time
 		results['count'] = nsolutions
-		results['soln'] = bssf
+		if all_solns:
+			results['soln'] = solutions
+		else:
+			results['soln'] = bssf
 		results['max'] = None
 		results['total'] = None
 		results['pruned'] = None
