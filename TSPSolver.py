@@ -303,12 +303,15 @@ class TSPSolver:
 		self.num_mutations = int(self.population_size/4)
 		self.random_sol_time = 2
 		self.greedy_sol_time = 2
+		self.total_solutions = 0
+		self.bssf_updates = 0
+		self.invalid_sols_generated = 0
+		self.num_generations = 0
 		solution_timeout = 10.0
 		self.last_solution_update = time.time()
-		start = time.time()		
+		start_time = time.time()		
 		self.init_population()
-
-		while time.time()-start_time < time_allowance or time.time()-self.last_solution_update < solution_timeout:
+		while time.time()-start_time < time_allowance: #and time.time()-self.last_solution_update < solution_timeout:
 			# Determine Fitness --> Already done because our population is just the solutions
 			# Select mating pool
 			mating_population = self.select_mates()
@@ -318,19 +321,20 @@ class TSPSolver:
 				self.breed(breeding_order[i], breeding_order[i+1])
 			# Mutate
 			for _ in range(self.num_mutations):
-				self.mutate(self.population[random.randint(0,len(self.population))])
+				self.mutate(self.population[random.randint(0,len(self.population)-1)])
 			# Prune to population size
 			self.prune()
+			self.num_generations += 1
 		end_time = time.time()
 
 		results = {}
 		results['cost'] = self.bssf.cost
 		results['time'] = end_time - start_time
-		results['count'] = 0
+		results['count'] = self.bssf_updates
 		results['soln'] = self.bssf
-		results['max'] = None
-		results['total'] = None
-		results['pruned'] = None
+		results['max'] = self.num_generations
+		results['total'] = self.total_solutions
+		results['pruned'] = self.invalid_sols_generated
 		return results
 
 
@@ -340,15 +344,15 @@ class TSPSolver:
 		return np.random.choice(self.population, self.mating_size, p=population_distribution)
 
 	def init_population(self):
-		sols, bssf = self.greedy(time_allowance=self.greedy_sol_time, all_solns=True)['soln']
+		self.population, bssf = [], self.defaultRandomTour()['soln'] 
+		#self.population, bssf = self.greedy(time_allowance=self.greedy_sol_time, all_solns=True)['soln']
 		self.bssf = bssf
-		while len(sols) < self.population_size:
+		while len(self.population) < self.population_size:
 			sol = self.defaultRandomTour(time_allowance=self.random_sol_time)['soln']
 			self.add_sol(sol)
-		self.population = sols
 
 	def mutate(self, sol):
-		idx = random.randint(0, len(sol.route)-1)
+		idx = random.randint(0, len(sol.route)-2)
 		route = sol.route.copy()
 		route[idx], route[idx+1] = route[idx+1], route[idx]
 		new_sol = TSPSolution(route)
@@ -356,15 +360,19 @@ class TSPSolver:
 		
 
 	def add_sol(self, new_sol, keep_inf_prob=0):
+		self.total_solutions += 1
 		if new_sol.cost < np.inf or random.random() < keep_inf_prob:
 			self.population.append(new_sol)
+		elif new_sol.cost == np.inf:
+			self.invalid_sols_generated += 1
 		if new_sol.cost < self.bssf.cost:
-				self.bssf = sol
+				self.bssf = new_sol
 				self.last_solution_update = time.time()
+				self.bssf_updates += 1
 		
 	def breed(self, sol1, sol2):
-		range1 = random.randint(0, len(sol1.route))
-		range2 = random.randint(0, len(sol1.route))
+		range1 = random.randint(0, len(sol1.route)-1)
+		range2 = random.randint(0, len(sol1.route)-1)
 
 		start_idx = min(range1, range2)
 		end_idx = min(range1, range2)
@@ -388,9 +396,9 @@ class TSPSolver:
 	def prune(self):
 		num_to_prune = len(self.population) - self.population_size
 		costs = [p.cost for p in self.population]
-		max_cost = max(filter(lambda x: x < np.inf, self.costs))
-		costs = [if c <= np.inf c else max_cost for c in costs]
+		max_cost = max(filter(lambda x: x < np.inf, costs))
+		costs = [c if c <= np.inf else max_cost for c in costs]
 		population_costs = np.array(costs)
 		population_distribution = population_costs/np.sum(population_costs)
-		delete_routes = np.random.choice(self.population, self.num_to_prune, p=population_distribution)
+		delete_routes = np.random.choice(self.population, num_to_prune, p=population_distribution)
 		self.population = list(filter(lambda city: city not in delete_routes, self.population))
