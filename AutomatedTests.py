@@ -21,10 +21,11 @@ else:
 
 class AutomatedTester( ):
     # difficulties are Easy, Normal, Hard, Hard (Deterministic)
-    def __init__( self, difficulty="Easy", npoints = 5, ntests = 5 ):
+    def __init__( self, difficulty="Easy", npoints = 5, ntests = 5, timeout = 10 ):
         self.diff = difficulty
         self.npoints = npoints
         self.ntests = ntests
+        self.timeout = timeout
 
     def newPoints(self):		
         seed = self.curSeed
@@ -43,13 +44,13 @@ class AutomatedTester( ):
                 ptlist.append( QPointF(xval,yval) )
         return ptlist
 
-    def start(self):
+    def start(self, testType = "fancy"):
+        print("***************************\nTEST TYPE: " + testType + "\n**************************")
         self.results = []
         SCALE = 1.0
         self.data_range	= { 'x':[-1.5*SCALE,1.5*SCALE], \
 								'y':[-SCALE,SCALE] }
         for i in range(self.ntests):
-            print("TEST: " + str(i))  
             self.curSeed = random.randint(0,400)
             points = self.newPoints() # uses current rand seed
             rand_seed = self.curSeed
@@ -57,21 +58,35 @@ class AutomatedTester( ):
             self.genParams = {'size':self.npoints,'seed':self.curSeed,'diff':self.diff}
             self.solver = TSPSolver( None )
             self.solver.setupWithScenario(self._scenario)
-            self.results.append(self.solver.fancy())
-        print(self.results)
-        return self.results
+            self.results.append(getattr(self.solver, testType)(self.timeout))
+            print("TEST: " + str(i), self.results[i])
+            # self.results.append(self.solver.fancy())
+        i = 0
+        print("\n")
+        avgTime = float(sum(d['time'] for d in self.results)) / len(self.results)
+        avgLength = float(sum(d['cost'] for d in self.results)) / len(self.results)
+        print("Average Time: ", avgTime)
+        print("Average Length: ", avgLength)
+        return avgLength
 
-print(sys.argv)
-if (len(sys.argv) > 1):
-    difficulty, npoints, ntests = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
-    test = AutomatedTester(difficulty, npoints, ntests)
+# run all tests with 15 cities: python AutomatedTests final 15
+if (len(sys.argv) > 1 and sys.argv[1] == "final"):
+    npoints = int(sys.argv[2]) if (len(sys.argv) > 2) else 15
+    tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
+    test = AutomatedTester("Hard", npoints, 5, 600)
+    randomLength = test.start(tests[0])
+    greedyLength = test.start(tests[1])
+    print("% of Random: ", float(greedyLength / randomLength), "\n")
+    bbLength = test.start(tests[2])
+    print("% of Greedy: ", float(bbLength / greedyLength), "\n")
+    fancyLength = test.start(tests[3])
+    print("% of Greedy: ", float(fancyLength / greedyLength), "\n")
+# run 5 B&B easy tests with 10 cities (60 sec): python AutomatedTests branchAndBound Easy 10 5 60
 else:
-    test = AutomatedTester()
-test.start()
-# if __name__ == '__main__':
-#     	# This line allows CNTL-C in the terminal to kill the program
-# 	signal.signal(signal.SIGINT, signal.SIG_DFL)
-	
-# 	app = QApplication(sys.argv)
-# 	w = AutomatedTester()
-# 	sys.exit(app.exec())
+    testType = sys.argv[1] if (len(sys.argv) > 1) else "fancy" 
+    difficulty = sys.argv[2] if (len(sys.argv) > 2) else "Hard"
+    npoints = int(sys.argv[3]) if (len(sys.argv) > 3) else 15 
+    ntests = int(sys.argv[4]) if (len(sys.argv) > 4) else 5
+    timeout = int(sys.argv[5]) if (len(sys.argv) > 5) else (600) # 10 minutes
+    test = AutomatedTester(difficulty, npoints, ntests, timeout)
+    test.start(testType)
