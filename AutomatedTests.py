@@ -59,13 +59,12 @@ class AutomatedTester( ):
             self.solver = TSPSolver( None )
             self.solver.setupWithScenario(self._scenario)
             self.results.append(getattr(self.solver, testType)(self.timeout))
-            print("TEST: " + str(i), self.results[i])
+            # print("TEST: " + str(i), self.results[i])
             # self.results.append(self.solver.fancy())
         i = 0
-        print("\n")
         avgTime = float(sum(d['time'] for d in self.results)) / len(self.results)
         avgLength = float(sum(d['cost'] for d in self.results)) / len(self.results)
-        print("Average Time: ", avgTime)
+        print("\nAverage Time: ", avgTime)
         print("Average Length: ", avgLength)
         return avgLength
 
