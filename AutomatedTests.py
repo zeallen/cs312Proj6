@@ -98,7 +98,8 @@ def getTimeLen(time, length):
 
 def runFinalMultiprocessed(npoints, q, csvq):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
-    test = AutomatedTester("Hard", npoints, 5, 100)
+    numSeconds = 100
+    test = AutomatedTester("Hard", npoints, 5, numSeconds)
     randomInfo = getInfoString(tests[0])
     greedyInfo = getInfoString(tests[1])
     bbInfo = getInfoString(tests[2])
