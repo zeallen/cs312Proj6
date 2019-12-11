@@ -307,11 +307,11 @@ class TSPSolver:
 		self.bssf_updates = 0
 		self.invalid_sols_generated = 0
 		self.num_generations = 0
-		solution_timeout = 10.0
+		solution_timeout = 60.0
 		self.last_solution_update = time.time()
 		start_time = time.time()		
 		self.init_population()
-		while time.time()-start_time < time_allowance: #and time.time()-self.last_solution_update < solution_timeout:
+		while time.time()-start_time < time_allowance and time.time()-self.last_solution_update < solution_timeout:
 			# Determine Fitness --> Already done because our population is just the solutions
 			# Select mating pool
 			mating_population = self.select_mates()
