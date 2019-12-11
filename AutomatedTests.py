@@ -4,6 +4,8 @@ import math
 import random
 import signal
 import sys
+import csv
+from multiprocessing import Process, Queue
 
 from TSPSolver import *
 from TSPClasses import *
@@ -44,8 +46,8 @@ class AutomatedTester( ):
                 ptlist.append( QPointF(xval,yval) )
         return ptlist
 
-    def start(self, testType = "fancy"):
-        print("***************************\nTEST TYPE: " + testType + "\n**************************")
+    def startNoOutput(self, testType = "fancy"):
+        # print("***************************\nTEST TYPE: " + testType + "\n**************************")
         self.results = []
         SCALE = 1.0
         self.data_range	= { 'x':[-1.5*SCALE,1.5*SCALE], \
@@ -64,6 +66,13 @@ class AutomatedTester( ):
         i = 0
         avgTime = float(sum(d['time'] for d in self.results)) / len(self.results)
         avgLength = float(sum(d['cost'] for d in self.results)) / len(self.results)
+        # print("\nAverage Time: ", avgTime)
+        # print("Average Length: ", avgLength)
+        return avgTime, avgLength
+
+    def start(self, testType = "fancy"):
+        print("***************************\nTEST TYPE: " + testType + "\n**************************")
+        avgTime, avgLength = self.startNoOutput(testType)
         print("\nAverage Time: ", avgTime)
         print("Average Length: ", avgLength)
         return avgLength
@@ -79,6 +88,39 @@ def runFinal(npoints=15):
     fancyLength = test.start(tests[3])
     print("% of Greedy: ", float(fancyLength / greedyLength), "\n")
 
+def getInfoString(testType):
+    return "***************************\nTEST TYPE: " + testType + "\n***************************\n"
+
+def getTimeLen(time, length):
+    rTime = "Average Time: {}\n".format(time)
+    rLen = "Average Length: {}\n".format(length)
+    return rTime, rLen
+
+def runFinalMultiprocessed(npoints, q, csvq):
+    tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
+    test = AutomatedTester("Hard", npoints, 5, 100)
+    randomInfo = getInfoString(tests[0])
+    greedyInfo = getInfoString(tests[1])
+    bbInfo = getInfoString(tests[2])
+    fancyInfo = getInfoString(tests[3])
+    randomTime, randomLength = test.startNoOutput(tests[0])
+    rTime, rLen = getTimeLen(randomTime, randomLength)
+    greedyTime, greedyLength = test.startNoOutput(tests[1])
+    gTime, gLen = getTimeLen(greedyTime, greedyLength)
+    greedyPercent = 100.0*float(greedyLength / randomLength)
+    gPercent = "% of Random: {}\n".format(greedyPercent)
+    bbTime, bbLength = test.startNoOutput(tests[2])
+    bTime, bLen = getTimeLen(bbTime, bbLength)
+    bbPercent = 100.0*float(bbLength / greedyLength)
+    bPercent = "% of Greedy: {}\n".format(bbPercent)
+    fancyTime, fancyLength = test.startNoOutput(tests[3])
+    fTime, fLen = getTimeLen(fancyTime, fancyLength)
+    fancyPercent = 100.0*float(fancyLength / greedyLength)
+    fPercent = "% of Greedy: {}\n".format(fancyPercent)
+    fullOutput = ''.join(["\n\nTest: {}\n\n".format(npoints), randomInfo, rTime, rLen, greedyInfo, gTime, gLen, gPercent ,bbInfo, bTime, bLen, bPercent, fancyInfo, fTime, fLen, fPercent])
+    q.put(fullOutput)
+    csvq.put([npoints, randomTime, randomLength, greedyTime, greedyLength, greedyPercent, bbTime, bbLength, bbPercent, fancyTime, fancyLength, fancyPercent])
+
 def runSpecific(testType, difficulty, npoints, ntests, timeout):
     test = AutomatedTester(difficulty, npoints, ntests, timeout)
     test.start(testType)
@@ -90,8 +132,28 @@ if len(sys.argv) == 1:
     for nCities in numCities:
         runFinal(nCities)
 
+# run all tests multiprocessed: python AutomatedTests all
+elif len(sys.argv) == 2:
+    # Multiprocessing
+    q = Queue()
+    csvq = Queue()
+    numCities = [15,30,60,100,200,500,1000]
+    processes = []
+    for nCities in numCities:
+        p = Process(target=runFinalMultiprocessed, args=(nCities, q, csvq))
+        p.start()
+        processes.append(p)
+    with open("results.csv","w+") as csv_file:
+        csv_writer = csv.writer(csv_file)            
+        csv_writer.writerow(["" , "Random", "Random", "Greedy", "Greedy", "Greedy", "Branch and Bound", "Branch and Bound", "Branch and Bound", "Genetic", "Genetic", "Genetic"])
+        csv_writer.writerow(["Num Cities", "Time (sec)", "Path Length", "Time (sec)", "Path Length", "% of Random", "Time (sec)", "Path Length", "% of Greedy", "Time (sec)", "Path Length", "% of Greedy"])
+        for p in processes:
+            print(q.get())
+            csv_writer.writerow(csvq.get())
+            p.join()
+
 # run all tests with 15 cities: python AutomatedTests final 15
-if (len(sys.argv) > 1 and sys.argv[1] == "final"):
+elif (len(sys.argv) > 1 and sys.argv[1] == "final"):
     npoints = int(sys.argv[2]) if (len(sys.argv) > 2) else 15
     runFinal(npoints)
 # run 5 B&B easy tests with 10 cities (60 sec): python AutomatedTests branchAndBound Easy 10 5 60
