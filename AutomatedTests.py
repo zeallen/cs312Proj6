@@ -96,9 +96,8 @@ def getTimeLen(time, length):
     rLen = "Average Length: {}\n".format(length)
     return rTime, rLen
 
-def runFinalMultiprocessed(npoints, q, csvq):
+def runFinalMultiprocessed(npoints, q, csvq, numSeconds):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
-    numSeconds = 600
     test = AutomatedTester("Hard", npoints, 5, numSeconds)
     randomInfo = getInfoString(tests[0])
     greedyInfo = getInfoString(tests[1])
@@ -138,10 +137,12 @@ elif len(sys.argv) == 2:
     # Multiprocessing
     q = Queue()
     csvq = Queue()
-    numCities = [15,30,60,100,200,500,1000]
+    numCities = [10, 11, 12, 13, 14, 15]
+    numSeconds = 5
+    # numCities = [15,30,60,100,200,500,1000]
     processes = []
     for nCities in numCities:
-        p = Process(target=runFinalMultiprocessed, args=(nCities, q, csvq))
+        p = Process(target=runFinalMultiprocessed, args=(nCities, q, csvq, numSeconds))
         p.start()
         processes.append(p)
     with open("results.csv","w+") as csv_file:

@@ -375,7 +375,7 @@ class TSPSolver:
 		range2 = random.randint(0, len(sol1.route)-1)
 
 		start_idx = min(range1, range2)
-		end_idx = min(range1, range2)
+		end_idx = max(range1, range2)
 		self.add_sol(self.breed_single(sol1, sol2, start_idx, end_idx))
 		self.add_sol(self.breed_single(sol2, sol1, start_idx, end_idx))
 	
