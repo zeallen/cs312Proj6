@@ -298,11 +298,11 @@ class TSPSolver:
 	'''
 		
 	def fancy( self,time_allowance=60.0 ):
-		self.population_size = 100
+		self.population_size = 1000
 		self.mating_size = int(self.population_size/2)
 		self.num_mutations = int(self.population_size/4)
-		self.random_sol_time = 2
-		self.greedy_sol_time = 2
+		self.random_sol_time = 5
+		self.greedy_sol_time = 5
 		self.total_solutions = 0
 		self.bssf_updates = 0
 		self.invalid_sols_generated = 0
@@ -344,8 +344,8 @@ class TSPSolver:
 		return np.random.choice(self.population, self.mating_size, p=population_distribution)
 
 	def init_population(self):
-		self.population, bssf = [], self.defaultRandomTour()['soln'] 
-		#self.population, bssf = self.greedy(time_allowance=self.greedy_sol_time, all_solns=True)['soln']
+		# self.population, bssf = [], self.defaultRandomTour()['soln'] 
+		self.population, bssf = self.greedy(time_allowance=self.greedy_sol_time, all_solns=True)['soln']
 		self.bssf = bssf
 		while len(self.population) < self.population_size:
 			sol = self.defaultRandomTour(time_allowance=self.random_sol_time)['soln']
