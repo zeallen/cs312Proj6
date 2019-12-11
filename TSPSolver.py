@@ -365,7 +365,7 @@ class TSPSolver:
 			self.population.append(new_sol)
 		elif new_sol.cost == np.inf:
 			self.invalid_sols_generated += 1
-		if new_sol.cost < self.bssf.cost:
+		if self.bssf is None or new_sol.cost < self.bssf.cost:
 				self.bssf = new_sol
 				self.last_solution_update = time.time()
 				self.bssf_updates += 1
