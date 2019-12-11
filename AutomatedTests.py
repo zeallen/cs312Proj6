@@ -68,9 +68,7 @@ class AutomatedTester( ):
         print("Average Length: ", avgLength)
         return avgLength
 
-# run all tests with 15 cities: python AutomatedTests final 15
-if (len(sys.argv) > 1 and sys.argv[1] == "final"):
-    npoints = int(sys.argv[2]) if (len(sys.argv) > 2) else 15
+def runFinal(npoints=15):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
     test = AutomatedTester("Hard", npoints, 5, 600)
     randomLength = test.start(tests[0])
@@ -80,6 +78,22 @@ if (len(sys.argv) > 1 and sys.argv[1] == "final"):
     print("% of Greedy: ", float(bbLength / greedyLength), "\n")
     fancyLength = test.start(tests[3])
     print("% of Greedy: ", float(fancyLength / greedyLength), "\n")
+
+def runSpecific(testType, difficulty, npoints, ntests, timeout):
+    test = AutomatedTester(difficulty, npoints, ntests, timeout)
+    test.start(testType)
+
+
+# Auto run all size of tests
+if len(sys.argv) == 1:
+    numCities = [15, 30, 60, 100, 200, 500, 1000]
+    for nCities in numCities:
+        runFinal(nCities)
+
+# run all tests with 15 cities: python AutomatedTests final 15
+if (len(sys.argv) > 1 and sys.argv[1] == "final"):
+    npoints = int(sys.argv[2]) if (len(sys.argv) > 2) else 15
+    runFinal(npoints)
 # run 5 B&B easy tests with 10 cities (60 sec): python AutomatedTests branchAndBound Easy 10 5 60
 else:
     testType = sys.argv[1] if (len(sys.argv) > 1) else "fancy" 
@@ -87,5 +101,4 @@ else:
     npoints = int(sys.argv[3]) if (len(sys.argv) > 3) else 15 
     ntests = int(sys.argv[4]) if (len(sys.argv) > 4) else 5
     timeout = int(sys.argv[5]) if (len(sys.argv) > 5) else (600) # 10 minutes
-    test = AutomatedTester(difficulty, npoints, ntests, timeout)
-    test.start(testType)
+    runSpecific(testType, difficulty, npoints, ntests, timeout)
