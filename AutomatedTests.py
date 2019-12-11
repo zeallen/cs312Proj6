@@ -137,9 +137,10 @@ elif len(sys.argv) == 2:
     # Multiprocessing
     q = Queue()
     csvq = Queue()
-    numCities = [10, 11, 12, 13, 14, 15]
-    numSeconds = 5
-    # numCities = [15,30,60,100,200,500,1000]
+    # numCities = [10, 11, 12, 13, 14, 15]
+    # numSeconds = 5
+    numSeconds = 600
+    numCities = [15,30,60,100,200,500,1000]
     processes = []
     for nCities in numCities:
         p = Process(target=runFinalMultiprocessed, args=(nCities, q, csvq, numSeconds))
