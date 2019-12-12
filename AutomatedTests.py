@@ -28,9 +28,13 @@ class AutomatedTester( ):
         self.npoints = npoints
         self.ntests = ntests
         self.timeout = timeout
+        self.seeds = []
+        for i in range(ntests):
+            self.seeds.append(random.randint(0,400))
+        # self.curSeed = random.randint(0,400)
 
-    def newPoints(self):		
-        seed = self.curSeed
+    def newPoints(self, curSeed):		
+        seed = curSeed
         random.seed( seed )
 
         ptlist = []
@@ -53,14 +57,15 @@ class AutomatedTester( ):
         self.data_range	= { 'x':[-1.5*SCALE,1.5*SCALE], \
 								'y':[-SCALE,SCALE] }
         for i in range(self.ntests):
-            self.curSeed = random.randint(0,400)
-            points = self.newPoints() # uses current rand seed
-            rand_seed = self.curSeed
+            curSeed = self.seeds[i]
+            points = self.newPoints(curSeed) # uses current rand seed
+            rand_seed = curSeed
             self._scenario = Scenario( city_locations=points, difficulty=self.diff, rand_seed=rand_seed )
-            self.genParams = {'size':self.npoints,'seed':self.curSeed,'diff':self.diff}
+            self.genParams = {'size':self.npoints,'seed':curSeed,'diff':self.diff}
             self.solver = TSPSolver( None )
             self.solver.setupWithScenario(self._scenario)
             self.results.append(getattr(self.solver, testType)(self.timeout))
+            print(curSeed)
             # print("TEST: " + str(i), self.results[i])
             # self.results.append(self.solver.fancy())
         i = 0
