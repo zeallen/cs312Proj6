@@ -109,14 +109,20 @@ def runFinalMultiprocessed(npoints, q, csvq, numSeconds):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
     test = AutomatedTester("Hard", npoints, 5, numSeconds)
     randomInfo = getInfoString(tests[0])
-    randomTime, randomLength = test.startNoOutput(tests[0])
+    if npoints > 60:
+        randomTime, randomLength = 1, 1
+    else:
+        randomTime, randomLength = test.startNoOutput(tests[0])
     rTime, rLen = getTimeLen(randomTime, randomLength)
     greedyTime, greedyLength = test.startNoOutput(tests[1])
     greedyInfo = getInfoString(tests[1])
     gTime, gLen = getTimeLen(greedyTime, greedyLength)
     greedyPercent = 100.0*float(greedyLength / randomLength)
     gPercent = "% of Random: {}\n".format(greedyPercent)
-    bbTime, bbLength = test.startNoOutput(tests[2])
+    if npoints > 30:
+        bbTime, bbLength = 1, 1
+    else:
+        bbTime, bbLength = test.startNoOutput(tests[2])
     bbInfo = getInfoString(tests[2])
     bTime, bLen = getTimeLen(bbTime, bbLength)
     bbPercent = 100.0*float(bbLength / greedyLength)
@@ -149,7 +155,7 @@ elif len(sys.argv) == 2:
     # numCities = [10, 11, 12, 13, 14, 15]
     # numSeconds = 5
     numSeconds = 600
-    numCities = [15,30,60,100,200,500,1000]
+    numCities = [15,30,60,100,200,500,750,1000]
     processes = []
     for nCities in numCities:
         p = Process(target=runFinalMultiprocessed, args=(nCities, q, csvq, numSeconds))
