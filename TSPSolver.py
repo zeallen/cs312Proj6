@@ -302,7 +302,7 @@ class TSPSolver:
 		self.mating_size = int(self.population_size/2)
 		self.num_mutations = int(self.population_size/4)
 		self.random_sol_time = 10
-		self.greedy_sol_time = 10
+		self.greedy_sol_time = 60
 		self.total_solutions = 0
 		self.bssf_updates = 0
 		self.invalid_sols_generated = 0
@@ -311,7 +311,9 @@ class TSPSolver:
 		self.last_solution_update = time.time()
 		start_time = time.time()		
 		self.init_population()
-		while time.time()-start_time < time_allowance and time.time()-self.last_solution_update < solution_timeout and self.num_generations < 10000:
+		self.max_generations_since_update = 5000
+		self.num_generations_since_update = 0
+		while time.time()-start_time < time_allowance and self.num_generations_since_update < self.max_generations_since_update:
 			# Determine Fitness --> Already done because our population is just the solutions
 			# Select mating pool
 			mating_population = self.select_mates()
@@ -325,6 +327,7 @@ class TSPSolver:
 			# Prune to population size
 			self.prune()
 			self.num_generations += 1
+			self.num_generations_since_update += 1
 		end_time = time.time()
 
 		results = {}
@@ -372,6 +375,7 @@ class TSPSolver:
 			self.invalid_sols_generated += 1
 		if self.bssf is None or new_sol.cost < self.bssf.cost:
 				self.bssf = new_sol
+				self.num_generations_since_update = 0
 				self.last_solution_update = time.time()
 				self.bssf_updates += 1
 		
