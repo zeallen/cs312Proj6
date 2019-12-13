@@ -107,7 +107,7 @@ def getTimeLen(time, length):
 
 def runFinalMultiprocessed(npoints, q, csvq, numSeconds):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
-    test = AutomatedTester("Hard", npoints, 5, numSeconds)
+    test = AutomatedTester("Hard (Deterministic)", npoints, 5, numSeconds)
     randomInfo = getInfoString(tests[0])
     if npoints > 60:
         randomTime, randomLength = 1, 1
