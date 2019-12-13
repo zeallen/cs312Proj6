@@ -69,7 +69,7 @@ class AutomatedTester( ):
             self.results.append(result)
             if result['time'] >= self.timeout:
                 break
-            print(curSeed)
+            # print(curSeed)
             # print("TEST: " + str(i), self.results[i])
             # self.results.append(self.solver.fancy())
         i = 0

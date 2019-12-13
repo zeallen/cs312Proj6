@@ -338,7 +338,7 @@ class TSPSolver:
 		results['max'] = self.num_generations
 		results['total'] = self.total_solutions
 		results['pruned'] = self.invalid_sols_generated
-		print(self.bssf_updates)
+		# print(self.bssf_updates)
 		return results
 
 
