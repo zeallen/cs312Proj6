@@ -64,7 +64,11 @@ class AutomatedTester( ):
             self.genParams = {'size':self.npoints,'seed':curSeed,'diff':self.diff}
             self.solver = TSPSolver( None )
             self.solver.setupWithScenario(self._scenario)
-            self.results.append(getattr(self.solver, testType)(self.timeout))
+
+            result = getattr(self.solver, testType)(self.timeout)
+            self.results.append(result)
+            if result['time'] >= self.timeout:
+                break
             print(curSeed)
             # print("TEST: " + str(i), self.results[i])
             # self.results.append(self.solver.fancy())
@@ -84,12 +88,12 @@ class AutomatedTester( ):
 
 def runFinal(npoints=15):
     tests = ["defaultRandomTour", "greedy", "branchAndBound", "fancy"]
-    test = AutomatedTester("Hard", npoints, 5, 600)
-    randomLength = test.start(tests[0])
+    test = AutomatedTester("Hard (Deterministic)", npoints, 5, 600)
+    #randomLength = test.start(tests[0])
     greedyLength = test.start(tests[1])
-    print("% of Random: ", float(greedyLength / randomLength), "\n")
-    bbLength = test.start(tests[2])
-    print("% of Greedy: ", float(bbLength / greedyLength), "\n")
+    #print("% of Random: ", float(greedyLength / randomLength), "\n")
+    #bbLength = test.start(tests[2])
+    #print("% of Greedy: ", float(bbLength / greedyLength), "\n")
     fancyLength = test.start(tests[3])
     print("% of Greedy: ", float(fancyLength / greedyLength), "\n")
 

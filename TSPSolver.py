@@ -302,7 +302,7 @@ class TSPSolver:
 		self.mating_size = int(self.population_size/2)
 		self.num_mutations = int(self.population_size/4)
 		self.random_sol_time = 10
-		self.greedy_sol_time = 10
+		self.greedy_sol_time = 600
 		self.total_solutions = 0
 		self.bssf_updates = 0
 		self.invalid_sols_generated = 0
